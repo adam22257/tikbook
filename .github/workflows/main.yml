@@ -51,7 +51,12 @@ jobs:
       - name: Grant Gradle permission
         working-directory: mobile/android
         run: chmod +x gradlew
-
+        - name: Fix Kotlin Version (Expo compatible)
+        working-directory: mobile/android
+        run: |
+          echo "kotlin.version=1.9.22" >> gradle.properties
+          echo "android.useAndroidX=true" >> gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
       - name: Build Debug APK
         working-directory: mobile/android
         run: ./gradlew assembleDebug --no-daemon
