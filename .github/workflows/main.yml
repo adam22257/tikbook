@@ -1,11 +1,14 @@
-name: Build Android APK (EAS)
+name: Build Android APK (No EAS)
 
 on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-android:
     runs-on: ubuntu-latest
+
+    env:
+      CI: true
 
     steps:
       - name: Checkout repository
@@ -16,16 +19,28 @@ jobs:
         with:
           node-version: 18
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Install dependencies
         working-directory: mobile
         run: npm install
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
-
-      - name: Build APK with EAS
+      - name: Prebuild Android
         working-directory: mobile
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx expo prebuild --platform android --clean
+
+      - name: Build Debug APK
+        working-directory: mobile/android
         run: |
-          eas build --platform android --non-interactive --clear-cache
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tikbook-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
