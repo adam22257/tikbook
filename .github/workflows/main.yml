@@ -10,6 +10,7 @@ jobs:
     env:
       CI: true
       NODE_ENV: production
+      EXPO_NO_TELEMETRY: 1
 
     steps:
       - name: Checkout repository
@@ -23,25 +24,40 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - name: Install dependencies
         working-directory: mobile
         run: npm install
 
-      - name: Prebuild Android
+      - name: Prebuild Android (Expo)
         working-directory: mobile
-        run: npx expo prebuild --platform android --clean
+        run: npx expo prebuild --platform android --clean --no-install
+
+      # ⭐⭐ أهم خطوة في الملف كله ⭐⭐
+      - name: Force Gradle 8.4 (Prevent Gradle 9 crash)
+        working-directory: mobile/android
+        run: |
+          mkdir -p gradle/wrapper
+          cat > gradle/wrapper/gradle-wrapper.properties <<EOF
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
+          EOF
+
+      - name: Grant Gradle permission
+        working-directory: mobile/android
+        run: chmod +x gradlew
 
       - name: Build Debug APK
         working-directory: mobile/android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: tikbook-apk
+          name: tikbook-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
