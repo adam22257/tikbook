@@ -9,6 +9,7 @@ jobs:
 
     env:
       CI: true
+      NODE_ENV: production
 
     steps:
       - name: Checkout repository
@@ -37,7 +38,7 @@ jobs:
         working-directory: mobile/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
